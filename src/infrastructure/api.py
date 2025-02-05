@@ -4,24 +4,34 @@ from datetime import timedelta
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from domain.services import GameService
+
 from .auth import Auth
 from .dto import Token
 
 from .database import SessionFactory
 
-from .repositories import SqlAlchemyUserRepository
+from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "1"))
 
 app = FastAPI()
 
+session = SessionFactory()
+
+user_repo = SqlAlchemyUserRepository(session=session)
+inventroy_repo = SqlAlchemyInventoryRepository(session=session)
+score_repo = SqlAlchemyScoreRepository(session=session)
+
+service = GameService(user_repo=user_repo, 
+                        inventory_repo=inventroy_repo, 
+                        score_repo=score_repo)
+
+auth = Auth(game_service=service)
+
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    session = SessionFactory()
-    user_repo = SqlAlchemyUserRepository(session=session)
-    auth = Auth(user_repo=user_repo)
-
     user = auth.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -39,16 +49,16 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @app.post("/register")
 async def register(form_data: OAuth2PasswordRequestForm = Depends()):
-    session = SessionFactory()
-    user_repo = SqlAlchemyUserRepository(session=session)
-    auth = Auth(user_repo=user_repo)
-
-    user = user_repo.get_user_by_name(form_data.username)
-    if user:
+    hashed_password = auth.get_password_hash(form_data.password)
+    try:
+        return service.create_user(form_data.username, hashed_password)
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"User with name {form_data.username} already exists"
         )
-    
-    hashed_password = auth.get_password_hash(form_data.password)
-    return user_repo.create_user(form_data.username, form_data.password)
+
+@app.get("/user")
+async def get_current_user(current_user = Depends(auth.get_current_user)):
+    return current_user
+

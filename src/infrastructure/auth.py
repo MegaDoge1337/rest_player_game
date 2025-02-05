@@ -7,20 +7,20 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 
-from domain.repositories import UserRepository
+from domain.services import GameService
 from domain.models import User
 
-from dto import TokenData
+from .dto import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 class Auth:
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, game_service: GameService):
         self.secret_key = os.environ.get("SECRET_KEY", "my_secret_key")
         self.algorithm = os.environ.get("ALGORITHM", "HS256")
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        self.user_repo = user_repo
+        self.game_service = game_service
 
     def get_password_hash(self, password: str) -> str:
         return self.pwd_context.hash(password)
@@ -29,7 +29,7 @@ class Auth:
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def authenticate_user(self, name: str, password: str) -> User:
-        user = self.user_repo.get_user_by_name(name)
+        user = self.game_service.get_user(name)
 
         if not user or not self.verify_pasword(password, user.password):
             return None
@@ -64,7 +64,8 @@ class Auth:
         except jwt.PyJWTError:
             raise credential_exception
 
-        user: User = self.user_repo.get_user_by_name(token_data.username)
+        user: User = self.game_service.get_user(token_data.username)
+        print(user)
         if user is None:
             raise credential_exception
 
