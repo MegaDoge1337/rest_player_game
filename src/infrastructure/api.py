@@ -7,11 +7,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from domain.services import GameService
 
 from .auth import Auth
-from .dto import Token
+from .dto import Token, Action
 
 from .database import SessionFactory
 
-from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository
+from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository, OpenAILLMRepository
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "1"))
 
@@ -62,3 +62,7 @@ async def register(form_data: OAuth2PasswordRequestForm = Depends()):
 async def get_current_user(current_user = Depends(auth.get_current_user)):
     return current_user
 
+@app.post("/act")
+async def make_action(action: Action, current_user = Depends(auth.get_current_user)):
+    repo = OpenAILLMRepository()
+    return repo.make_action(current_user, action.action)

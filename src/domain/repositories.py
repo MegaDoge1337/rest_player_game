@@ -35,3 +35,8 @@ class UserRepository(ABC):
     @abstractmethod
     def create_user(self, user: User) -> User:
         pass
+
+class LLMRepository(ABC):
+    @abstractmethod
+    def make_action(self, action: str):
+        pass

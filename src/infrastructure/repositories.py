@@ -1,11 +1,18 @@
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from domain.repositories import UserRepository, InventoryRepository, ScoreRepository
+from domain.repositories import UserRepository, InventoryRepository, ScoreRepository, LLMRepository
 from domain.models import User, Inventory, Score
 
 from .orm import UserORM, InventoryORM, ScoreORM
 
+from openai import OpenAI
+
+from .prompt import SYSTEM_PROMPT, ACTION_PROMPT_TEMPATE
+
+import random
+import json
+import os
 
 
 class SqlAlchemyUserRepository(UserRepository):
@@ -92,3 +99,31 @@ class SqlAlchemyScoreRepository(ScoreRepository):
     
     def update_user_score(self, user, score):
         return super().update_user_score(user, score)
+    
+class OpenAILLMRepository(LLMRepository):
+    def __init__(self):
+        self.base_url = os.environ.get("LLM_BASE_URL")
+        self.api_key = os.environ.get("LLM_API_KEY")
+        self.model = os.environ.get("LLM_MODEL")
+        self.client = OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key
+        )
+    
+    def make_action(self, user: User, action: str):
+        user_action = ACTION_PROMPT_TEMPATE.format(
+            action=action,
+            inventory=", ".join(user.inventory.items),
+            is_lucky=("не повезет" if random.randint(1, 20) < 10 else "повезет")
+        )
+
+        completion = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_action}
+            ],
+            temperature=0.7,
+        )
+
+        return json.loads(completion.choices[0].message.content)
