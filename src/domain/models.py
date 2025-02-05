@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 
 @dataclass
@@ -21,9 +20,9 @@ class Inventory:
 class User:
     id: int
     name: str
+    password: str
     inventory: Inventory
     score: Score
-    created_at: datetime
 
     def get_inventory(self) -> list[str]:
         return self.inventory.items
