@@ -33,5 +33,5 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    def create_user(self, name: str, password: str) -> User:
+    def create_user(self, user: User) -> User:
         pass
