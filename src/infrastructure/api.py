@@ -7,11 +7,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from domain.services import GameService
 
 from .auth import Auth
-from .dto import Token, Action
+from .dto import Token, Action, ActionResult
 
 from .database import SessionFactory
 
-from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository, OpenAILLMRepository
+from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository, SqlAlchemyEventRepository, OpenAILLMRepository
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "1"))
 
@@ -22,11 +22,13 @@ session = SessionFactory()
 user_repo = SqlAlchemyUserRepository(session=session)
 inventroy_repo = SqlAlchemyInventoryRepository(session=session)
 score_repo = SqlAlchemyScoreRepository(session=session)
+event_repo = SqlAlchemyEventRepository(session=session)
 llm_repo = OpenAILLMRepository()
 
 service = GameService(user_repo=user_repo, 
                         inventory_repo=inventroy_repo, 
                         score_repo=score_repo,
+                        event_repo=event_repo,
                         llm_repo=llm_repo)
 
 auth = Auth(game_service=service)
@@ -68,8 +70,16 @@ async def get_current_user(current_user = Depends(auth.get_current_user)):
 async def make_action(action: Action, current_user = Depends(auth.get_current_user)):
     result = service.make_action(current_user, action.action)
     service.write_event(current_user, result.description)
-    return result
+    return ActionResult(
+        description=result.description, 
+        inventory=result.inventory, 
+        score=result.score
+    )
 
-@app.get("/events")
-async def make_action(current_user = Depends(auth.get_current_user)):
-    return service.get_user_events(current_user)
+@app.get("/user/events/{page}")
+async def make_action(page: int, current_user = Depends(auth.get_current_user)):
+    return service.get_user_events(current_user, page)
+
+@app.get("/events/{page}")
+async def make_action(page: int, current_user = Depends(auth.get_current_user)):
+    return service.get_all_events(page)

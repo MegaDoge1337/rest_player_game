@@ -37,7 +37,7 @@ class GameService:
         return user
 
     def make_action(self, user: User, action: str) -> Action:
-        result = self.llm_repo.make_action(action)
+        result = self.llm_repo.make_action(user, action)
         self.inventory_repo.update_user_invetory(user, result.inventory)
         self.score_repo.update_user_score(user, result.score)
         return result
@@ -45,8 +45,8 @@ class GameService:
     def write_event(self, user: User, description: str) -> None:
         return self.event_repo.create_event(description, user)
     
-    def get_user_events(self, user: User) -> list[Event]:
-        return self.event_repo.get_user_events(user)
+    def get_user_events(self, user: User, page: int) -> list[Event]:
+        return self.event_repo.get_user_events(user, page)
     
-    def get_all_events(self) -> list[Event]:
-        return self.event_repo.get_all_events()
+    def get_all_events(self, page: int) -> list[Event]:
+        return self.event_repo.get_all_events(page)

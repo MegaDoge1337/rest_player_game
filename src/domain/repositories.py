@@ -42,11 +42,11 @@ class EventRepository(ABC):
         pass
 
     @abstractmethod
-    def get_user_events(self, user: User) -> list[Event]:
+    def get_user_events(self, user: User, page: int) -> list[Event]:
         pass
 
     @abstractmethod
-    def get_all_events(self, user: User) -> list[Event]:
+    def get_all_events(self, page: int) -> list[Event]:
         pass
 
 class LLMRepository(ABC):

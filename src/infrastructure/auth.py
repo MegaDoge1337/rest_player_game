@@ -65,7 +65,6 @@ class Auth:
             raise credential_exception
 
         user: User = self.game_service.get_user(token_data.username)
-        print(user)
         if user is None:
             raise credential_exception
 

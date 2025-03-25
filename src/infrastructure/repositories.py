@@ -126,7 +126,7 @@ class SqlAlchemyScoreRepository(ScoreRepository):
         except NoResultFound:
             return None
         
-        score_orm = score_orm.score + score
+        score_orm.score = score_orm.score + score
 
         self.session.add(score_orm)
         self.session.commit()
@@ -139,6 +139,7 @@ class SqlAlchemyScoreRepository(ScoreRepository):
 class SqlAlchemyEventRepository(EventRepository):
     def __init__(self, session: Session):
         self.session = session
+        self.page_size = int(os.environ.get("EVENTS_PAGE_LIMIT"))
     
     def create_event(self, description: str, user: User):
         event_orm = EventORM(
@@ -154,9 +155,30 @@ class SqlAlchemyEventRepository(EventRepository):
             user=user
         )
 
-    def get_user_events(self, user) -> list[Event]:
-        event_orms = self.session.query(EventORM).filter_by(user_id=user.id).all()
+    def get_user_events(self, user: User, page: int) -> list[Event]:
+        event_orms = self.session.query(EventORM).filter_by(user_id=user.id).limit(self.page_size).offset(self.page_size * page).all()
         events = [Event(event_orm.description, user) for event_orm in event_orms]
+        return events
+    
+    def get_all_events(self, page: int) -> list[Event]:
+        print(page, self.page_size)
+        event_orms = self.session.query(EventORM).limit(self.page_size).offset(self.page_size * page).all()
+        events = [Event(
+                description=event_orm.description, 
+                user=User(
+                    id=event_orm.user.id,
+                    name=event_orm.user.name,
+                    password=None,
+                    inventory=Inventory(
+                        id=event_orm.user.inventory.id,
+                        items=event_orm.user.inventory.items
+                    ),
+                    score=Score(
+                        id=event_orm.user.score.id,
+                        score=event_orm.user.score.score
+                    )
+                )
+            ) for event_orm in event_orms]
         return events
 
 class OpenAILLMRepository(LLMRepository):
@@ -190,7 +212,10 @@ class OpenAILLMRepository(LLMRepository):
             return None
 
         try:
-            completion_json: dict[str, str] = json.loads(completion.choices[0].message.content)
+            completion_text = completion.choices[0].message.content
+            completion_text = completion_text.replace("```json", "").replace("```", "")
+            completion_text = completion_text.strip().rstrip()
+            completion_json: dict[str, str] = json.loads(completion_text)
         except json.JSONDecodeError:
             return None
 
