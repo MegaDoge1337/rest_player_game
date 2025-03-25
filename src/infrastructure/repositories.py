@@ -154,6 +154,11 @@ class SqlAlchemyEventRepository(EventRepository):
             user=user
         )
 
+    def get_user_events(self, user) -> list[Event]:
+        event_orms = self.session.query(EventORM).filter_by(user_id=user.id).all()
+        events = [Event(event_orm.description, user) for event_orm in event_orms]
+        return events
+
 class OpenAILLMRepository(LLMRepository):
     def __init__(self):
         self.base_url = os.environ.get("LLM_BASE_URL")
