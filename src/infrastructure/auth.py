@@ -17,8 +17,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class Auth:
     def __init__(self, game_service: GameService):
-        self.secret_key = os.environ.get("SECRET_KEY", "my_secret_key")
-        self.algorithm = os.environ.get("ALGORITHM", "HS256")
+        self.secret_key = os.environ.get("SECRET_KEY")
+        self.algorithm = os.environ.get("ALGORITHM")
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.game_service = game_service
 
@@ -59,12 +59,10 @@ class Auth:
             username = payload.get("sub")
             if username is None:
                 raise credential_exception
-
-            token_data = TokenData(username=username)
         except jwt.PyJWTError:
             raise credential_exception
 
-        user: User = self.game_service.get_user(token_data.username)
+        user: User = self.game_service.get_user(username)
         if user is None:
             raise credential_exception
 

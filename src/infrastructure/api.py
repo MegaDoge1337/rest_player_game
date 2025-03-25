@@ -13,7 +13,7 @@ from .database import SessionFactory
 
 from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository, SqlAlchemyEventRepository, OpenAILLMRepository
 
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "1"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 app = FastAPI()
 
@@ -48,7 +48,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = auth.create_access_token(
         data={"sub": user.name}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return Token(access_token=access_token, token_type="bearer")
 
 
 @app.post("/register")
