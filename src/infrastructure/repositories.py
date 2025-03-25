@@ -1,10 +1,10 @@
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from domain.repositories import UserRepository, InventoryRepository, ScoreRepository, LLMRepository
-from domain.models import User, Inventory, Score, ActionResult
+from domain.repositories import UserRepository, InventoryRepository, ScoreRepository, LLMRepository, EventRepository
+from domain.models import User, Inventory, Score, Action, Event
 
-from .orm import UserORM, InventoryORM, ScoreORM
+from .orm import UserORM, InventoryORM, ScoreORM, EventORM
 
 from openai import OpenAI, APIConnectionError
 
@@ -135,7 +135,25 @@ class SqlAlchemyScoreRepository(ScoreRepository):
             id=score_orm.id,
             score=score_orm.score
         )
+
+class SqlAlchemyEventRepository(EventRepository):
+    def __init__(self, session: Session):
+        self.session = session
     
+    def create_event(self, description: str, user: User):
+        event_orm = EventORM(
+            user_id=user.id,
+            description=description
+        )
+
+        self.session.add(event_orm)
+        self.session.commit()
+
+        return Event(
+            description=description,
+            user=user
+        )
+
 class OpenAILLMRepository(LLMRepository):
     def __init__(self):
         self.base_url = os.environ.get("LLM_BASE_URL")
@@ -146,7 +164,7 @@ class OpenAILLMRepository(LLMRepository):
             api_key=self.api_key
         )
     
-    def make_action(self, user: User, action: str):
+    def make_action(self, user: User, action: str) -> Action:
         user_action = ACTION_PROMPT_TEMPATE.format(
             action=action,
             inventory=", ".join(user.inventory.items),
@@ -165,8 +183,14 @@ class OpenAILLMRepository(LLMRepository):
         except APIConnectionError:
             return None
 
-        completion_json = json.loads(completion.choices[0].message.content)
+        try:
+            completion_json: dict[str, str] = json.loads(completion.choices[0].message.content)
+        except json.JSONDecodeError:
+            return None
 
-        return ActionResult(
-            
+        return Action(
+            description=completion_json.get("result"),
+            inventory=completion_json.get("inventory"),
+            score=int(completion_json.get("score")),
+            user=User
         )

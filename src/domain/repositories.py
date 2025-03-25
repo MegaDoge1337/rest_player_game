@@ -38,7 +38,7 @@ class UserRepository(ABC):
 
 class EventRepository(ABC):
     @abstractmethod
-    def create_event(self, description: str, user_name: str) -> Event:
+    def create_event(self, description: str, user: User) -> Event:
         pass
 
     @abstractmethod
@@ -51,5 +51,5 @@ class EventRepository(ABC):
 
 class LLMRepository(ABC):
     @abstractmethod
-    def make_action(self, action: str):
+    def make_action(self, action: str) -> Action:
         pass

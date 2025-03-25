@@ -34,13 +34,8 @@ class GameService:
         user.score = self.score_repo.get_score_by_user(user)
         return user
 
-    def make_action(self, user: User, action: str):
+    def make_action(self, user: User, action: str) -> Action:
         result = self.llm_repo.make_action(action)
         self.inventory_repo.update_user_invetory(user, result["inventory"])
         self.score_repo.update_user_score(user, result["score"])
-
-        return Action(
-            result=result["result"],
-            inventory=result["inventory"],
-            score=(result["score"] + user.score)
-        )
+        return result

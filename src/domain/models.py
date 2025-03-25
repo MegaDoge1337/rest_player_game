@@ -19,8 +19,10 @@ class User:
     score: Score
 
 @dataclass
-class ActionResult:
+class Action:
     description: str
+    inventory: list[str]
+    score: int
     user: User
 
 @dataclass
