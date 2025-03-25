@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .models import Score, Inventory, User
+from .models import Score, Inventory, User, Action, Event
 
 class ScoreRepository(ABC):
     @abstractmethod
@@ -34,6 +34,19 @@ class UserRepository(ABC):
 
     @abstractmethod
     def create_user(self, user: User) -> User:
+        pass
+
+class EventRepository(ABC):
+    @abstractmethod
+    def create_event(self, description: str, user_name: str) -> Event:
+        pass
+
+    @abstractmethod
+    def get_user_events(self, user: User) -> list[Event]:
+        pass
+
+    @abstractmethod
+    def get_all_events(self, user: User) -> list[Event]:
         pass
 
 class LLMRepository(ABC):

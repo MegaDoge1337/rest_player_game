@@ -22,10 +22,12 @@ session = SessionFactory()
 user_repo = SqlAlchemyUserRepository(session=session)
 inventroy_repo = SqlAlchemyInventoryRepository(session=session)
 score_repo = SqlAlchemyScoreRepository(session=session)
+llm_repo = OpenAILLMRepository()
 
 service = GameService(user_repo=user_repo, 
                         inventory_repo=inventroy_repo, 
-                        score_repo=score_repo)
+                        score_repo=score_repo,
+                        llm_repo=llm_repo)
 
 auth = Auth(game_service=service)
 
