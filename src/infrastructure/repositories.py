@@ -164,6 +164,7 @@ class OpenAILLMRepository(LLMRepository):
         self.base_url = os.environ.get("LLM_BASE_URL")
         self.api_key = os.environ.get("LLM_API_KEY")
         self.model = os.environ.get("LLM_MODEL")
+        self.temp = float(os.environ.get("LLM_TEMP"))
         self.client = OpenAI(
             base_url=self.base_url,
             api_key=self.api_key
@@ -183,7 +184,7 @@ class OpenAILLMRepository(LLMRepository):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_action}
                 ],
-                temperature=0.7,
+                temperature=self.temp,
             )
         except APIConnectionError:
             return None

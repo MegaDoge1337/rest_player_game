@@ -11,7 +11,7 @@ class UserORM(Base):
     password = Column(String)
     inventory = relationship('InventoryORM', backref='user', uselist=False)
     score = relationship('ScoreORM', backref='user', uselist=False)
-    events = relationship("EventORM")
+    events = relationship("EventORM", backref='user', uselist=True)
 
 class InventoryORM(Base):
     __tablename__ = "inventories"

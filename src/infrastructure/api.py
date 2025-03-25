@@ -66,5 +66,10 @@ async def get_current_user(current_user = Depends(auth.get_current_user)):
 
 @app.post("/act")
 async def make_action(action: Action, current_user = Depends(auth.get_current_user)):
-    repo = OpenAILLMRepository()
-    return repo.make_action(current_user, action.action)
+    result = service.make_action(current_user, action.action)
+    service.write_event(current_user, result.description)
+    return result
+
+@app.get("/events")
+async def make_action(current_user = Depends(auth.get_current_user)):
+    return service.get_user_events(current_user)
