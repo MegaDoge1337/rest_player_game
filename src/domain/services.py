@@ -1,10 +1,10 @@
-from .models import User, Action, Event
+from .models import Action, Event, User
 from .repositories import (
-    ScoreRepository,
-    InventoryRepository,
-    UserRepository,
     EventRepository,
+    InventoryRepository,
     LLMRepository,
+    ScoreRepository,
+    UserRepository,
 )
 
 

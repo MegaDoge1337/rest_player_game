@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from .models import Score, Inventory, User, Action, Event
+
+from .models import Action, Event, Inventory, Score, User
 
 
 class ScoreRepository(ABC):

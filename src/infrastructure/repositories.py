@@ -1,24 +1,22 @@
+import json
+import os
+import random
+
+from openai import APIConnectionError, OpenAI
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
+from domain.models import Action, Event, Inventory, Score, User
 from domain.repositories import (
-    UserRepository,
-    InventoryRepository,
-    ScoreRepository,
-    LLMRepository,
     EventRepository,
+    InventoryRepository,
+    LLMRepository,
+    ScoreRepository,
+    UserRepository,
 )
-from domain.models import User, Inventory, Score, Action, Event
 
-from .orm import UserORM, InventoryORM, ScoreORM, EventORM
-
-from openai import OpenAI, APIConnectionError
-
-from .llm import SYSTEM_PROMPT, ACTION_PROMPT_TEMPATE
-
-import random
-import json
-import os
+from .llm import ACTION_PROMPT_TEMPATE, SYSTEM_PROMPT
+from .orm import EventORM, InventoryORM, ScoreORM, UserORM
 
 
 class SqlAlchemyUserRepository(UserRepository):

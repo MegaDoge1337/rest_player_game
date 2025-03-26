@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import create_autospec
 
-from src.domain.models import User, Inventory, Score, Action, Event
+import pytest
+
+from src.domain.models import Action, Event, Inventory, Score, User
 from src.domain.repositories import (
-    UserRepository,
-    InventoryRepository,
-    ScoreRepository,
     EventRepository,
+    InventoryRepository,
     LLMRepository,
+    ScoreRepository,
+    UserRepository,
 )
 from src.domain.services import GameService
 

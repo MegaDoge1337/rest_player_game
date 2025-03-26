@@ -7,8 +7,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 
-from domain.services import GameService
 from domain.models import User
+from domain.services import GameService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

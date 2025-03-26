@@ -7,16 +7,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from domain.services import GameService
 
 from .auth import Auth
-from .dto import User, Event, Action, ActionResult, Token
-
 from .database import SessionFactory
-
+from .dto import Action, ActionResult, Event, Token, User
 from .repositories import (
-    SqlAlchemyUserRepository,
+    OpenAILLMRepository,
+    SqlAlchemyEventRepository,
     SqlAlchemyInventoryRepository,
     SqlAlchemyScoreRepository,
-    SqlAlchemyEventRepository,
-    OpenAILLMRepository,
+    SqlAlchemyUserRepository,
 )
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
