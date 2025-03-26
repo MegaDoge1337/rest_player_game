@@ -241,3 +241,23 @@ def test_get_all_events(id: int, name: str, event_description: str, page: int):
     assert events[0].description == event.description
     assert events[0].user.id == event.user.id
     assert events[0].user.name == event.user.name
+
+
+@pytest.mark.parametrize(
+    ("id", "name", "score_id", "score_value"), [(1, "username", 1, 1)]
+)
+def test_get_users_with_best_score(id: int, name: str, score_id: int, score_value: int):
+    game_service = get_game_service()
+
+    user = get_user(id, name, None)
+    score = get_user_score(score_id, score_value)
+
+    game_service.user_repo.get_users_list.return_value = [user]
+    game_service.score_repo.get_score_by_user.return_value = score
+
+    users = game_service.get_users_with_best_score()
+
+    assert users[0].id == id
+    assert users[0].name == name
+    assert users[0].score.id == score_id
+    assert users[0].score.score == score_value
