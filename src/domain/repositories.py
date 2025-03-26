@@ -51,5 +51,5 @@ class EventRepository(ABC):
 
 class LLMRepository(ABC):
     @abstractmethod
-    def make_action(self, action: str) -> Action:
+    def make_action(self, user: User, action: str) -> Action:
         pass

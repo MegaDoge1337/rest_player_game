@@ -50,7 +50,7 @@ class GameService:
         self.score_repo.update_user_score(user, result.score)
         return result
     
-    def write_event(self, user: User, description: str) -> None:
+    def write_event(self, user: User, description: str) -> Event:
         return self.event_repo.create_event(description, user)
     
     def get_user_events(self, user: User, page: int) -> list[Event]:
