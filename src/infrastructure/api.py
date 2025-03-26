@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from domain.services import GameService
 
 from .auth import Auth
-from .dto import Token, Action, ActionResult
+from .dto import User, Event, Action, ActionResult, Token
 
 from .database import SessionFactory
 
@@ -55,7 +55,10 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def register(form_data: OAuth2PasswordRequestForm = Depends()):
     hashed_password = auth.get_password_hash(form_data.password)
     try:
-        return service.create_user(form_data.username, hashed_password)
+        user = service.create_user(form_data.username, hashed_password)
+        return User(name=user.name, 
+                    inventory=user.inventory.items,
+                    score=user.score.score)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -64,11 +67,20 @@ async def register(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @app.get("/user")
 async def get_current_user(current_user = Depends(auth.get_current_user)):
-    return current_user
+    return User(name=current_user.name,
+                inventory=current_user.inventory.items,
+                score=current_user.score.score)
 
 @app.post("/act")
 async def make_action(action: Action, current_user = Depends(auth.get_current_user)):
     result = service.make_action(current_user, action.action)
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to make action: Internal server error"
+        )
+
     service.write_event(current_user, result.description)
     return ActionResult(
         description=result.description, 
@@ -78,8 +90,24 @@ async def make_action(action: Action, current_user = Depends(auth.get_current_us
 
 @app.get("/user/events/{page}")
 async def make_action(page: int, current_user = Depends(auth.get_current_user)):
-    return service.get_user_events(current_user, page)
+    events = service.get_user_events(current_user, page)
+    return [Event(
+        description=event.description,
+        user=User(
+            name=event.user.name,
+            inventory=event.user.inventory.items,
+            score=event.user.score.score
+        )
+    ) for event in events]
 
 @app.get("/events/{page}")
-async def make_action(page: int, current_user = Depends(auth.get_current_user)):
-    return service.get_all_events(page)
+async def make_action(page: int, _ = Depends(auth.get_current_user)):    
+    events = service.get_all_events(page)
+    return [Event(
+        description=event.description,
+        user=User(
+            name=event.user.name,
+            inventory=event.user.inventory.items,
+            score=event.user.score.score
+        )
+    ) for event in events]

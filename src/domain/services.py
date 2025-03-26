@@ -32,12 +32,20 @@ class GameService:
     
     def get_user(self, name: str) -> User:
         user = self.user_repo.get_user_by_name(name)
+
+        if not user:
+            return None
+
         user.inventory = self.inventory_repo.get_inventory_by_user(user)
         user.score = self.score_repo.get_score_by_user(user)
         return user
 
     def make_action(self, user: User, action: str) -> Action:
         result = self.llm_repo.make_action(user, action)
+
+        if not result:
+            return None
+
         self.inventory_repo.update_user_invetory(user, result.inventory)
         self.score_repo.update_user_score(user, result.score)
         return result

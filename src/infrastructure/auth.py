@@ -10,8 +10,6 @@ from passlib.context import CryptContext
 from domain.services import GameService
 from domain.models import User
 
-from .dto import TokenData
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
@@ -62,9 +60,8 @@ class Auth:
         except jwt.PyJWTError:
             raise credential_exception
 
-        user: User = self.game_service.get_user(username)
+        user = self.game_service.get_user(username)
         if user is None:
             raise credential_exception
 
-        user.password = None
         return user

@@ -161,7 +161,6 @@ class SqlAlchemyEventRepository(EventRepository):
         return events
     
     def get_all_events(self, page: int) -> list[Event]:
-        print(page, self.page_size)
         event_orms = self.session.query(EventORM).limit(self.page_size).offset(self.page_size * page).all()
         events = [Event(
                 description=event_orm.description, 
