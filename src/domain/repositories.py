@@ -37,6 +37,10 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
+    def get_users_list(self) -> list[User]:
+        pass
+
+    @abstractmethod
     def create_user(self, user: User) -> User:
         pass
 

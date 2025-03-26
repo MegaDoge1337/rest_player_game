@@ -16,7 +16,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 class Auth:
     def __init__(self, game_service: GameService):
         self.secret_key = os.environ.get("SECRET_KEY")
+
+        if not self.secret_key:
+            raise ValueError("Environment variable `SECRET_KEY` not defined.")
+
         self.algorithm = os.environ.get("ALGORITHM")
+
+        if not self.algorithm:
+            raise ValueError("Environment variable `ALGORITHM` not defined.")
+
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.game_service = game_service
 

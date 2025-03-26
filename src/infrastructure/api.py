@@ -8,7 +8,7 @@ from domain.services import GameService
 
 from .auth import Auth
 from .database import SessionFactory
-from .dto import Action, ActionResult, Event, Token, User
+from .dto import Action, ActionResult, Event, Token, User, UserRating
 from .repositories import (
     OpenAILLMRepository,
     SqlAlchemyEventRepository,
@@ -18,6 +18,9 @@ from .repositories import (
 )
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
+
+if not ACCESS_TOKEN_EXPIRE_MINUTES:
+    raise ValueError("Environment variable `ACCESS_TOKEN_EXPIRE_MINUTES` not defined.")
 
 app = FastAPI()
 
@@ -127,3 +130,9 @@ async def get_all_events(page: int, _=Depends(auth.get_current_user)):
         )
         for event in events
     ]
+
+
+@app.get("/rating")
+async def get_users_with_best_score(_=Depends(auth.get_current_user)):
+    users = service.get_users_with_best_score()
+    return [UserRating(name=user.name, score=user.score.score) for user in users]

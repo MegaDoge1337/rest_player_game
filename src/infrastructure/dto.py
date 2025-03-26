@@ -22,6 +22,11 @@ class ActionResult(BaseModel):
     score: int
 
 
+class UserRating(BaseModel):
+    name: str
+    score: int
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str

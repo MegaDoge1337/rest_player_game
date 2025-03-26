@@ -63,3 +63,10 @@ class GameService:
 
     def get_all_events(self, page: int) -> list[Event]:
         return self.event_repo.get_all_events(page)
+
+    def get_users_with_best_score(self) -> list[User]:
+        users = self.user_repo.get_users_list()
+        for user in users:
+            user.score = self.score_repo.get_score_by_user(user)
+        users.sort(reverse=True, key=lambda x: x.score.score)
+        return users
