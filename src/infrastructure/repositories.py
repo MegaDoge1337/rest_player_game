@@ -135,6 +135,9 @@ class SqlAlchemyScoreRepository(ScoreRepository):
 
         score_orm.score = score_orm.score + score
 
+        if score_orm.score < 0:
+            score_orm.score = 0
+
         self.session.add(score_orm)
         self.session.commit()
 
