@@ -1,14 +1,17 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Score:
     id: int
     score: int
 
+
 @dataclass
 class Inventory:
     id: int
     items: list[str]
+
 
 @dataclass
 class User:
@@ -18,12 +21,14 @@ class User:
     inventory: Inventory
     score: Score
 
+
 @dataclass
 class Action:
     description: str
     inventory: list[str]
     score: int
     user: User
+
 
 @dataclass
 class Event:

@@ -7,9 +7,10 @@ from src.domain.repositories import (
     InventoryRepository,
     ScoreRepository,
     EventRepository,
-    LLMRepository
+    LLMRepository,
 )
 from src.domain.services import GameService
+
 
 def get_game_service():
     return GameService(
@@ -17,69 +18,77 @@ def get_game_service():
         inventory_repo=create_autospec(InventoryRepository),
         score_repo=create_autospec(ScoreRepository),
         event_repo=create_autospec(EventRepository),
-        llm_repo=create_autospec(LLMRepository)
+        llm_repo=create_autospec(LLMRepository),
     )
+
 
 def get_user(id: int, name: str, hashed_password: str) -> User:
-    return User(
-        id=id,
-        name=name,
-        password=hashed_password,
-        inventory=None,
-        score=None
-    )
+    return User(id=id, name=name, password=hashed_password, inventory=None, score=None)
+
 
 def get_user_inventory(id: int, items: list[str]) -> Inventory:
-    return Inventory(
-        id=id,
-        items=items
-    )
+    return Inventory(id=id, items=items)
+
 
 def get_user_score(id: int, score: int) -> Score:
-    return Score(
-        id=id,
-        score=score
-    )
+    return Score(id=id, score=score)
 
-def get_action(description: str, inventory: list[str], score: int, user: User) -> Action:
-    return Action(
-        description=description,
-        inventory=inventory,
-        score=score,
-        user=user
-    )
+
+def get_action(
+    description: str, inventory: list[str], score: int, user: User
+) -> Action:
+    return Action(description=description, inventory=inventory, score=score, user=user)
+
 
 def get_event(description: str, user: User):
-    return Event(
-        description=description,
-        user=user
-    )
+    return Event(description=description, user=user)
+
 
 @pytest.mark.parametrize(
-    ("id", "name", "hashed_password"),
-    [
-        (1, "username", "somehashedpassword")
-    ]
+    ("id", "name", "hashed_password"), [(1, "username", "somehashedpassword")]
 )
 def test_create_user_when_exists(id: int, name: str, hashed_password: str):
     game_service = get_game_service()
-    game_service.user_repo.get_user_by_name.return_value = get_user(id, name, hashed_password)
+    game_service.user_repo.get_user_by_name.return_value = get_user(
+        id, name, hashed_password
+    )
 
     with pytest.raises(ValueError):
         game_service.create_user(name, hashed_password)
 
+
 @pytest.mark.parametrize(
-    ("id", "name", "hashed_password", "inventory_id", "inventory_items", "score_id", "score_value"),
-    [
-        (1, "username", "somehashedpassword", 1, ["item"], 1, 1)
-    ]
+    (
+        "id",
+        "name",
+        "hashed_password",
+        "inventory_id",
+        "inventory_items",
+        "score_id",
+        "score_value",
+    ),
+    [(1, "username", "somehashedpassword", 1, ["item"], 1, 1)],
 )
-def test_create_user_when_not_exists(id: int, name: str, hashed_password: str, inventory_id: int, inventory_items: list[str], score_id: int, score_value: int):
+def test_create_user_when_not_exists(
+    id: int,
+    name: str,
+    hashed_password: str,
+    inventory_id: int,
+    inventory_items: list[str],
+    score_id: int,
+    score_value: int,
+):
     game_service = get_game_service()
     game_service.user_repo.get_user_by_name.return_value = None
-    game_service.user_repo.create_user.return_value = get_user(id, name, hashed_password)
-    game_service.inventory_repo.create_user_invetory.return_value = get_user_inventory(inventory_id, inventory_items)
-    game_service.score_repo.create_user_score.return_value = get_user_score(score_id, score_value)
+    game_service.user_repo.create_user.return_value = get_user(
+        id, name, hashed_password
+    )
+    game_service.inventory_repo.create_user_invetory.return_value = get_user_inventory(
+        inventory_id, inventory_items
+    )
+    game_service.score_repo.create_user_score.return_value = get_user_score(
+        score_id, score_value
+    )
 
     user = game_service.create_user(name, hashed_password)
     assert user.name == name
@@ -87,29 +96,46 @@ def test_create_user_when_not_exists(id: int, name: str, hashed_password: str, i
     assert user.inventory.items == inventory_items
     assert user.score.score == score_value
 
+
 @pytest.mark.parametrize(
-    ("id", "name", "hashed_password", "inventory_id", "inventory_items", "score_id", "score_value"),
-    [
-        (1, "username", "somehashedpassword", 1, ["item"], 1, 1)
-    ]
+    (
+        "id",
+        "name",
+        "hashed_password",
+        "inventory_id",
+        "inventory_items",
+        "score_id",
+        "score_value",
+    ),
+    [(1, "username", "somehashedpassword", 1, ["item"], 1, 1)],
 )
-def test_get_user_when_exists(id: int, name: str, hashed_password: str, inventory_id: int, inventory_items: list[str], score_id: int, score_value: int):
+def test_get_user_when_exists(
+    id: int,
+    name: str,
+    hashed_password: str,
+    inventory_id: int,
+    inventory_items: list[str],
+    score_id: int,
+    score_value: int,
+):
     game_service = get_game_service()
-    game_service.user_repo.get_user_by_name.return_value = get_user(id, name, hashed_password)
-    game_service.inventory_repo.get_inventory_by_user.return_value = get_user_inventory(inventory_id, inventory_items)
-    game_service.score_repo.get_score_by_user.return_value = get_user_score(score_id, score_value)
+    game_service.user_repo.get_user_by_name.return_value = get_user(
+        id, name, hashed_password
+    )
+    game_service.inventory_repo.get_inventory_by_user.return_value = get_user_inventory(
+        inventory_id, inventory_items
+    )
+    game_service.score_repo.get_score_by_user.return_value = get_user_score(
+        score_id, score_value
+    )
 
     user = game_service.get_user(name)
     assert user.name == name
     assert user.inventory.items == inventory_items
     assert user.score.score == score_value
 
-@pytest.mark.parametrize(
-    ("name"),
-    [
-        ("username")
-    ]
-)
+
+@pytest.mark.parametrize(("name"), ["username"])
 def test_get_user_when_not_exists(name: str):
     game_service = get_game_service()
     game_service.user_repo.get_user_by_name.return_value = None
@@ -117,30 +143,17 @@ def test_get_user_when_not_exists(name: str):
     user = game_service.get_user(name)
     assert user is None
 
+
 @pytest.mark.parametrize(
-    (
-        "id", 
-        "name", 
-        "action_description",
-        "action_inventory",
-        "action_score"
-    ),
-    [
-        (
-            1, 
-            "username",
-            "somedescription",
-            ["new_item"],
-            10
-        )
-    ]
+    ("id", "name", "action_description", "action_inventory", "action_score"),
+    [(1, "username", "somedescription", ["new_item"], 10)],
 )
 def test_make_action(
-    id: int, 
-    name: str, 
+    id: int,
+    name: str,
     action_description: str,
     action_inventory: str,
-    action_score: int
+    action_score: int,
 ):
     game_service = get_game_service()
 
@@ -159,25 +172,11 @@ def test_make_action(
     assert result.user.id == user.id
     assert result.user.name == user.name
 
+
 @pytest.mark.parametrize(
-    (
-        "id", 
-        "name", 
-        "action_description"
-    ),
-    [
-        (
-            1, 
-            "username",
-            "somedescription"
-        )
-    ]
+    ("id", "name", "action_description"), [(1, "username", "somedescription")]
 )
-def test_make_action_when_failed(
-    id: int, 
-    name: str, 
-    action_description: str
-):
+def test_make_action_when_failed(id: int, name: str, action_description: str):
     game_service = get_game_service()
 
     user = get_user(id, name, None)
@@ -188,15 +187,13 @@ def test_make_action_when_failed(
 
     assert result is None
 
+
 @pytest.mark.parametrize(
-    ("id", "name", "event_description"),
-    [
-        (1, "username", "someevent")
-    ]
+    ("id", "name", "event_description"), [(1, "username", "someevent")]
 )
 def test_write_event(id: int, name: str, event_description: str):
     game_service = get_game_service()
-    
+
     user = get_user(id, name, None)
     event = get_event(event_description, user)
 
@@ -208,15 +205,13 @@ def test_write_event(id: int, name: str, event_description: str):
     assert saved_event.user.id == event.user.id
     assert saved_event.user.name == event.user.name
 
+
 @pytest.mark.parametrize(
-    ("id", "name", "event_description", "page"),
-    [
-        (1, "username", "someevent", 0)
-    ]
+    ("id", "name", "event_description", "page"), [(1, "username", "someevent", 0)]
 )
 def test_get_user_events(id: int, name: str, event_description: str, page: int):
     game_service = get_game_service()
-    
+
     user = get_user(id, name, None)
     event = get_event(event_description, user)
 
@@ -228,15 +223,13 @@ def test_get_user_events(id: int, name: str, event_description: str, page: int):
     assert events[0].user.id == event.user.id
     assert events[0].user.name == event.user.name
 
+
 @pytest.mark.parametrize(
-    ("id", "name", "event_description", "page"),
-    [
-        (1, "username", "someevent", 0)
-    ]
+    ("id", "name", "event_description", "page"), [(1, "username", "someevent", 0)]
 )
 def test_get_all_events(id: int, name: str, event_description: str, page: int):
     game_service = get_game_service()
-    
+
     user = get_user(id, name, None)
     event = get_event(event_description, user)
 

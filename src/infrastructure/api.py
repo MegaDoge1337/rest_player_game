@@ -11,7 +11,13 @@ from .dto import User, Event, Action, ActionResult, Token
 
 from .database import SessionFactory
 
-from .repositories import SqlAlchemyUserRepository, SqlAlchemyInventoryRepository, SqlAlchemyScoreRepository, SqlAlchemyEventRepository, OpenAILLMRepository
+from .repositories import (
+    SqlAlchemyUserRepository,
+    SqlAlchemyInventoryRepository,
+    SqlAlchemyScoreRepository,
+    SqlAlchemyEventRepository,
+    OpenAILLMRepository,
+)
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
@@ -25,11 +31,13 @@ score_repo = SqlAlchemyScoreRepository(session=session)
 event_repo = SqlAlchemyEventRepository(session=session)
 llm_repo = OpenAILLMRepository()
 
-service = GameService(user_repo=user_repo, 
-                        inventory_repo=inventroy_repo, 
-                        score_repo=score_repo,
-                        event_repo=event_repo,
-                        llm_repo=llm_repo)
+service = GameService(
+    user_repo=user_repo,
+    inventory_repo=inventroy_repo,
+    score_repo=score_repo,
+    event_repo=event_repo,
+    llm_repo=llm_repo,
+)
 
 auth = Auth(game_service=service)
 
@@ -56,58 +64,68 @@ async def register(form_data: OAuth2PasswordRequestForm = Depends()):
     hashed_password = auth.get_password_hash(form_data.password)
     try:
         user = service.create_user(form_data.username, hashed_password)
-        return User(name=user.name, 
-                    inventory=user.inventory.items,
-                    score=user.score.score)
+        return User(
+            name=user.name, inventory=user.inventory.items, score=user.score.score
+        )
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"User with name {form_data.username} already exists"
+            detail=f"User with name {form_data.username} already exists",
         )
 
+
 @app.get("/user")
-async def get_current_user(current_user = Depends(auth.get_current_user)):
-    return User(name=current_user.name,
-                inventory=current_user.inventory.items,
-                score=current_user.score.score)
+async def get_current_user(current_user=Depends(auth.get_current_user)):
+    return User(
+        name=current_user.name,
+        inventory=current_user.inventory.items,
+        score=current_user.score.score,
+    )
+
 
 @app.post("/act")
-async def make_action(action: Action, current_user = Depends(auth.get_current_user)):
+async def make_action(action: Action, current_user=Depends(auth.get_current_user)):
     result = service.make_action(current_user, action.action)
 
     if not result:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to make action: Internal server error"
+            detail="Failed to make action: Internal server error",
         )
 
     service.write_event(current_user, result.description)
     return ActionResult(
-        description=result.description, 
-        inventory=result.inventory, 
-        score=result.score
+        description=result.description, inventory=result.inventory, score=result.score
     )
 
+
 @app.get("/user/events/{page}")
-async def make_action(page: int, current_user = Depends(auth.get_current_user)):
+async def get_user_events(page: int, current_user=Depends(auth.get_current_user)):
     events = service.get_user_events(current_user, page)
-    return [Event(
-        description=event.description,
-        user=User(
-            name=event.user.name,
-            inventory=event.user.inventory.items,
-            score=event.user.score.score
+    return [
+        Event(
+            description=event.description,
+            user=User(
+                name=event.user.name,
+                inventory=event.user.inventory.items,
+                score=event.user.score.score,
+            ),
         )
-    ) for event in events]
+        for event in events
+    ]
+
 
 @app.get("/events/{page}")
-async def make_action(page: int, _ = Depends(auth.get_current_user)):    
+async def get_all_events(page: int, _=Depends(auth.get_current_user)):
     events = service.get_all_events(page)
-    return [Event(
-        description=event.description,
-        user=User(
-            name=event.user.name,
-            inventory=event.user.inventory.items,
-            score=event.user.score.score
+    return [
+        Event(
+            description=event.description,
+            user=User(
+                name=event.user.name,
+                inventory=event.user.inventory.items,
+                score=event.user.score.score,
+            ),
         )
-    ) for event in events]
+        for event in events
+    ]

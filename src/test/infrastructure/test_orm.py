@@ -7,21 +7,18 @@ from src.infrastructure.orm import Base, UserORM, InventoryORM, ScoreORM, EventO
 
 DATABASE_URL = "sqlite:///:memory:"
 
+
 def get_session():
     engine = create_engine(DATABASE_URL)
     SessionFactory = sessionmaker(bind=engine)
     Base.metadata.create_all(engine)
     return SessionFactory()
 
-@pytest.mark.parametrize(
-    ("name", "password"),
-    [
-        ("username", "1Qwerty")
-    ]
-)
+
+@pytest.mark.parametrize(("name", "password"), [("username", "1Qwerty")])
 def test_create_get_user(name: str, password: str):
     session = get_session()
-    
+
     user_orm = UserORM(name=name, password=password)
 
     session.add(user_orm)
@@ -35,12 +32,8 @@ def test_create_get_user(name: str, password: str):
     session.query(UserORM).filter_by(id=user_orm.id).delete()
     session.commit()
 
-@pytest.mark.parametrize(
-    ("items"),
-    [
-        (["item"])
-    ]
-)
+
+@pytest.mark.parametrize(("items"), [["item"]])
 def test_create_get_inventory(items: list[str]):
     session = get_session()
 
@@ -56,12 +49,8 @@ def test_create_get_inventory(items: list[str]):
     session.query(InventoryORM).filter_by(id=inventory_orm.id).delete()
     session.commit()
 
-@pytest.mark.parametrize(
-    ("score"),
-    [
-        (1)
-    ]
-)
+
+@pytest.mark.parametrize(("score"), [1])
 def test_create_get_score(score: int):
     session = get_session()
 
@@ -77,12 +66,8 @@ def test_create_get_score(score: int):
     session.query(ScoreORM).filter_by(id=score_orm.id).delete()
     session.commit()
 
-@pytest.mark.parametrize(
-    ("description"),
-    [
-        ("somedescription")
-    ]
-)
+
+@pytest.mark.parametrize(("description"), ["somedescription"])
 def test_create_get_event(description: str):
     session = get_session()
 
@@ -98,11 +83,9 @@ def test_create_get_event(description: str):
     session.query(EventORM).filter_by(id=event_orm.id).delete()
     session.commit()
 
+
 @pytest.mark.parametrize(
-    ("user_name", "user_password", "items"),
-    [
-        ("username", "1Qwerty", ["item"])
-    ]
+    ("user_name", "user_password", "items"), [("username", "1Qwerty", ["item"])]
 )
 def test_user_invenotry_relation(user_name: str, user_password: str, items: list[str]):
     session = get_session()
@@ -128,11 +111,9 @@ def test_user_invenotry_relation(user_name: str, user_password: str, items: list
     session.query(UserORM).filter_by(id=user_orm.id).delete()
     session.commit()
 
+
 @pytest.mark.parametrize(
-    ("user_name", "user_password", "score"),
-    [
-        ("username", "1Qwerty", 1)
-    ]
+    ("user_name", "user_password", "score"), [("username", "1Qwerty", 1)]
 )
 def test_user_score_relation(user_name: str, user_password: str, score: int):
     session = get_session()
@@ -158,11 +139,10 @@ def test_user_score_relation(user_name: str, user_password: str, score: int):
     session.query(UserORM).filter_by(id=user_orm.id).delete()
     session.commit()
 
+
 @pytest.mark.parametrize(
     ("user_name", "user_password", "description"),
-    [
-        ("username", "1Qwerty", "somedescription")
-    ]
+    [("username", "1Qwerty", "somedescription")],
 )
 def test_user_event_relation(user_name: str, user_password: str, description: str):
     session = get_session()

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from .models import Score, Inventory, User, Action, Event
 
+
 class ScoreRepository(ABC):
     @abstractmethod
     def get_score_by_user(self, user: User) -> Score:
@@ -14,11 +15,12 @@ class ScoreRepository(ABC):
     def update_user_score(self, user: User, score: int) -> Score:
         pass
 
+
 class InventoryRepository(ABC):
     @abstractmethod
     def get_inventory_by_user(self, user: User) -> Inventory:
         pass
-    
+
     @abstractmethod
     def create_user_invetory(self, user: User) -> Inventory:
         pass
@@ -26,6 +28,7 @@ class InventoryRepository(ABC):
     @abstractmethod
     def update_user_invetory(self, user: User, items: list[str]) -> Inventory:
         pass
+
 
 class UserRepository(ABC):
     @abstractmethod
@@ -35,6 +38,7 @@ class UserRepository(ABC):
     @abstractmethod
     def create_user(self, user: User) -> User:
         pass
+
 
 class EventRepository(ABC):
     @abstractmethod
@@ -48,6 +52,7 @@ class EventRepository(ABC):
     @abstractmethod
     def get_all_events(self, page: int) -> list[Event]:
         pass
+
 
 class LLMRepository(ABC):
     @abstractmethod
