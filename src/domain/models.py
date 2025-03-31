@@ -23,7 +23,7 @@ class User:
 
 
 @dataclass
-class Action:
+class ActionResult:
     description: str
     inventory: list[str]
     score: int
@@ -34,3 +34,9 @@ class Action:
 class Event:
     description: str
     user: User
+
+
+@dataclass
+class Token:
+    token: str
+    type: str

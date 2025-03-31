@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .models import Action, Event, Inventory, Score, User
+from .models import ActionResult, Event, Inventory, Score, User
 
 
 class ScoreRepository(ABC):
@@ -61,5 +61,5 @@ class EventRepository(ABC):
 
 class LLMRepository(ABC):
     @abstractmethod
-    def make_action(self, user: User, action: str) -> Action:
+    def make_action(self, user: User, action: str) -> ActionResult:
         pass

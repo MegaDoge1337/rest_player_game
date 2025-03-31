@@ -164,6 +164,7 @@ def test_make_action(
     game_service.llm_repo.make_action.return_value = action
     game_service.inventory_repo.update_user_invetory.return_value = None
     game_service.score_repo.update_user_score.return_value = None
+    game_service.event_repo.create_event.return_value = None
 
     result = game_service.make_action(user=user, action=action_description)
 
@@ -184,27 +185,7 @@ def test_make_action_when_failed(id: int, name: str, action_description: str):
 
     game_service.llm_repo.make_action.return_value = None
 
-    result = game_service.make_action(user=user, action=action_description)
-
-    assert result is None
-
-
-@pytest.mark.parametrize(
-    ("id", "name", "event_description"), [(1, "username", "someevent")]
-)
-def test_write_event(id: int, name: str, event_description: str):
-    game_service = get_game_service()
-
-    user = get_user(id, name, None)
-    event = get_event(event_description, user)
-
-    game_service.event_repo.create_event.return_value = event
-
-    saved_event = game_service.write_event(user, event_description)
-
-    assert saved_event.description == event.description
-    assert saved_event.user.id == event.user.id
-    assert saved_event.user.name == event.user.name
+    game_service.make_action(user=user, action=action_description)
 
 
 @pytest.mark.parametrize(

@@ -1,14 +1,13 @@
-import os
-from datetime import timedelta
+from fastapi import Depends, FastAPI, status
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.responses import JSONResponse
 
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 
 from domain.services import GameService
 
-from .auth import Auth
+from .auth import JwtAuth
 from .database import SessionFactory
-from .dto import Action, ActionResult, Event, Token, User, UserRating
 from .repositories import (
     OpenAILLMRepository,
     SqlAlchemyEventRepository,
@@ -17,15 +16,18 @@ from .repositories import (
     SqlAlchemyUserRepository,
 )
 
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-if not ACCESS_TOKEN_EXPIRE_MINUTES:
-    raise ValueError("Environment variable `ACCESS_TOKEN_EXPIRE_MINUTES` not defined.")
+class Action(BaseModel):
+    action: str
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
 session = SessionFactory()
 
+auth = JwtAuth()
 user_repo = SqlAlchemyUserRepository(session=session)
 inventroy_repo = SqlAlchemyInventoryRepository(session=session)
 score_repo = SqlAlchemyScoreRepository(session=session)
@@ -33,6 +35,7 @@ event_repo = SqlAlchemyEventRepository(session=session)
 llm_repo = OpenAILLMRepository()
 
 service = GameService(
+    auth=auth,
     user_repo=user_repo,
     inventory_repo=inventroy_repo,
     score_repo=score_repo,
@@ -40,99 +43,82 @@ service = GameService(
     llm_repo=llm_repo,
 )
 
-auth = Auth(game_service=service)
 
-
-@app.post("/token", response_model=Token)
+@app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = auth.authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user name or password",
-            headers={"WWW-Authentificate": "Bearer"},
+    try:
+        return service.get_access_token(form_data.username, form_data.password)
+    except PermissionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_401_UNAUTHORIZED
         )
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(
-        data={"sub": user.name}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
 
 
 @app.post("/register")
 async def register(form_data: OAuth2PasswordRequestForm = Depends()):
-    hashed_password = auth.get_password_hash(form_data.password)
     try:
-        user = service.create_user(form_data.username, hashed_password)
-        return User(
-            name=user.name, inventory=user.inventory.items, score=user.score.score
-        )
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"User with name {form_data.username} already exists",
+        return service.create_user(form_data.username, form_data.password)
+    except ValueError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_400_BAD_REQUEST
         )
 
 
 @app.get("/user")
-async def get_current_user(current_user=Depends(auth.get_current_user)):
-    return User(
-        name=current_user.name,
-        inventory=current_user.inventory.items,
-        score=current_user.score.score,
-    )
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        return service.get_current_user(token)
+    except PermissionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_401_UNAUTHORIZED
+        )
 
 
 @app.post("/act")
-async def make_action(action: Action, current_user=Depends(auth.get_current_user)):
-    result = service.make_action(current_user, action.action)
-
-    if not result:
-        raise HTTPException(
+async def make_action(action: Action, token: str = Depends(oauth2_scheme)):
+    try:
+        return service.make_action(action.action, token)
+    except ConnectionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to make action: Internal server error",
         )
-
-    service.write_event(current_user, result.description)
-    return ActionResult(
-        description=result.description, inventory=result.inventory, score=result.score
-    )
+    except ValueError as ex:
+        return JSONResponse(
+            content={"details": str(ex)},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    except PermissionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_401_UNAUTHORIZED
+        )
 
 
 @app.get("/user/events/{page}")
-async def get_user_events(page: int, current_user=Depends(auth.get_current_user)):
-    events = service.get_user_events(current_user, page)
-    return [
-        Event(
-            description=event.description,
-            user=User(
-                name=event.user.name,
-                inventory=event.user.inventory.items,
-                score=event.user.score.score,
-            ),
+async def get_user_events(page: int, token: str = Depends(oauth2_scheme)):
+    try:
+        return service.get_user_events(page, token)
+    except PermissionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_401_UNAUTHORIZED
         )
-        for event in events
-    ]
 
 
 @app.get("/events/{page}")
-async def get_all_events(page: int, _=Depends(auth.get_current_user)):
-    events = service.get_all_events(page)
-    return [
-        Event(
-            description=event.description,
-            user=User(
-                name=event.user.name,
-                inventory=event.user.inventory.items,
-                score=event.user.score.score,
-            ),
+async def get_all_events(page: int, token: str = Depends(oauth2_scheme)):
+    try:
+        return service.get_all_events(page, token)
+    except PermissionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_401_UNAUTHORIZED
         )
-        for event in events
-    ]
 
 
 @app.get("/rating")
-async def get_users_with_best_score(_=Depends(auth.get_current_user)):
-    users = service.get_users_with_best_score()
-    return [UserRating(name=user.name, score=user.score.score) for user in users]
+async def get_users_with_best_score(token: str = Depends(oauth2_scheme)):
+    try:
+        return service.get_users_with_best_score(token)
+    except PermissionError as ex:
+        return JSONResponse(
+            content={"details": str(ex)}, status_code=status.HTTP_401_UNAUTHORIZED
+        )

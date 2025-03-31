@@ -6,7 +6,7 @@ from openai import APIConnectionError, OpenAI
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from domain.models import Action, Event, Inventory, Score, User
+from domain.models import ActionResult, Event, Inventory, Score, User
 from domain.repositories import (
     EventRepository,
     InventoryRepository,
@@ -223,7 +223,7 @@ class OpenAILLMRepository(LLMRepository):
 
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
 
-    def make_action(self, user: User, action: str) -> Action:
+    def make_action(self, user: User, action: str) -> ActionResult:
         user_action = ACTION_PROMPT_TEMPATE.format(
             action=action,
             inventory=", ".join(user.inventory.items),
@@ -239,20 +239,20 @@ class OpenAILLMRepository(LLMRepository):
                 ],
                 temperature=self.temp,
             )
-        except APIConnectionError:
-            return None
+        except APIConnectionError as ex:
+            raise ConnectionError(ex)
 
         try:
             completion_text = completion.choices[0].message.content
             completion_text = completion_text.replace("```json", "").replace("```", "")
             completion_text = completion_text.strip().rstrip()
             completion_json: dict[str, str] = json.loads(completion_text)
-        except json.JSONDecodeError:
-            return None
+        except json.JSONDecodeError as ex:
+            return ValueError(ex)
 
-        return Action(
+        return ActionResult(
             description=completion_json.get("result"),
             inventory=completion_json.get("inventory"),
             score=int(completion_json.get("score")),
-            user=User,
+            user=user,
         )
