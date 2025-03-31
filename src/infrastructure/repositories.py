@@ -62,12 +62,9 @@ class SqlAlchemyUserRepository(UserRepository):
 class SqlAlchemyInventoryRepository(InventoryRepository):
     def __init__(self, session: Session):
         self.session = session
-        default_inventory = os.environ.get("DEFAULT_INVENTORY")
-
-        if not default_inventory:
-            raise ValueError("Environment variable `DEFAULT_INVENTORY` not defined.")
-
-        self.default_inventory = default_inventory.split(",")
+        self.default_inventory = os.environ.get(
+            "DEFAULT_INVENTORY", "Камень,Палка"
+        ).split(",")
 
     def get_inventory_by_user(self, user: User) -> Inventory:
         try:
@@ -106,10 +103,7 @@ class SqlAlchemyInventoryRepository(InventoryRepository):
 class SqlAlchemyScoreRepository(ScoreRepository):
     def __init__(self, session: Session):
         self.session = session
-        self.default_score = int(os.environ.get("DEFAULT_SCORE"))
-
-        if not self.default_score:
-            raise ValueError("Environment variable `DEFAULT_SCORE` not defined.")
+        self.default_score = int(os.environ.get("DEFAULT_SCORE", "1"))
 
     def get_score_by_user(self, user: User) -> Score:
         try:
@@ -147,10 +141,7 @@ class SqlAlchemyScoreRepository(ScoreRepository):
 class SqlAlchemyEventRepository(EventRepository):
     def __init__(self, session: Session):
         self.session = session
-        self.page_size = int(os.environ.get("EVENTS_PAGE_LIMIT"))
-
-        if not self.page_size:
-            raise ValueError("Environment variable `EVENTS_PAGE_LIMIT` not defined.")
+        self.page_size = int(os.environ.get("EVENTS_PAGE_LIMIT", "3"))
 
     def create_event(self, description: str, user: User):
         event_orm = EventORM(user_id=user.id, description=description)
@@ -201,26 +192,10 @@ class SqlAlchemyEventRepository(EventRepository):
 
 class OpenAILLMRepository(LLMRepository):
     def __init__(self):
-        self.base_url = os.environ.get("LLM_BASE_URL")
-
-        if not self.base_url:
-            raise ValueError("Environment variable `LLM_BASE_URL` not defined.")
-
-        self.api_key = os.environ.get("LLM_API_KEY")
-
-        if not self.api_key:
-            raise ValueError("Environment variable `LLM_API_KEY` not defined.")
-
-        self.model = os.environ.get("LLM_MODEL")
-
-        if not self.model:
-            raise ValueError("Environment variable `LLM_MODEL` not defined.")
-
-        self.temp = float(os.environ.get("LLM_TEMP"))
-
-        if not self.temp:
-            raise ValueError("Environment variable `LLM_TEMP` not defined.")
-
+        self.base_url = os.environ.get("LLM_BASE_URL", "http://localhost:1234/v1")
+        self.api_key = os.environ.get("LLM_API_KEY", "lm-studio")
+        self.model = os.environ.get("LLM_MODEL", "aya-23-8b")
+        self.temp = float(os.environ.get("LLM_TEMP", "0.7"))
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
 
     def make_action(self, user: User, action: str) -> ActionResult:
